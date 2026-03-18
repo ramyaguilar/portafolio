@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio Tracker — PPC Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0f14;
+    --surface: #151820;
+    --surface2: #1c2030;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --text: #e8eaf0;
+    --muted: #7a7f94;
+    --accent: #4f8ef7;
+    --accent-dim: rgba(79,142,247,0.12);
+    --green: #34c97b;
+    --green-dim: rgba(52,201,123,0.12);
+    --red: #f05a5a;
+    --red-dim: rgba(240,90,90,0.12);
+    --amber: #f5a623;
+    --amber-dim: rgba(245,166,35,0.12);
+    --mono: 'Space Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+    --radius: 10px;
+    --radius-lg: 16px;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  header {
+    padding: 2rem 2.5rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .header-title h1 {
+    font-family: var(--mono);
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--text);
+  }
+  .header-title p {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-top: 2px;
+    font-weight: 300;
+  }
+
+  .status-dot {
+    display: inline-block;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    margin-right: 6px;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+
+  .tcambio-badge {
+    font-size: 0.72rem;
+    color: var(--muted);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-family: var(--mono);
+  }
+  .tcambio-badge span { color: var(--amber); font-weight: 700; }
+
+  main { padding: 2rem 2.5rem; max-width: 1100px; margin: 0 auto; }
+
+  /* Summary cards */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 2rem;
+  }
+  .summary-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.2rem;
+  }
+  .summary-card label {
+    font-size: 0.7rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    display: block;
+    margin-bottom: 6px;
+    font-family: var(--mono);
+  }
+  .summary-card .val {
+    font-size: 1.35rem;
+    font-weight: 600;
+    font-family: var(--mono);
+  }
+  .summary-card .val.green { color: var(--green); }
+  .summary-card .val.red { color: var(--red); }
+  .summary-card .val.accent { color: var(--accent); }
+  .summary-card .val.amber { color: var(--amber); }
+
+  /* Add ticker form */
+  .add-form {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  .add-form h2 {
+    font-size: 0.8rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-family: var(--mono);
+    margin-bottom: 1rem;
+  }
+  .form-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+  }
+  .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex: 1;
+    min-width: 120px;
+  }
+  .form-field label {
+    font-size: 0.72rem;
+    color: var(--muted);
+    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .form-field input, .form-field select {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.9rem;
+    padding: 9px 12px;
+    outline: none;
+    transition: border-color 0.15s;
+    width: 100%;
+  }
+  .form-field input:focus, .form-field select:focus {
+    border-color: var(--accent);
+  }
+  .form-field input::placeholder { color: var(--muted); }
+
+  .btn-add {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    padding: 9px 22px;
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+    white-space: nowrap;
+    align-self: flex-end;
+  }
+  .btn-add:hover { opacity: 0.85; }
+  .btn-add:active { transform: scale(0.97); }
+  .btn-add:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .form-hint {
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-top: 0.75rem;
+    font-style: italic;
+  }
+
+  /* Error/status msg */
+  .form-msg {
+    font-size: 0.75rem;
+    margin-top: 0.6rem;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-family: var(--mono);
+    display: none;
+  }
+  .form-msg.error { background: var(--red-dim); color: var(--red); display: block; }
+  .form-msg.ok { background: var(--green-dim); color: var(--green); display: block; }
+
+  /* Table */
+  .table-wrap {
+    overflow-x: auto;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+  thead th {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    padding: 10px 14px;
+    text-align: right;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  thead th:first-child, thead th:nth-child(2) { text-align: left; }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+  }
+  tbody tr:hover { background: var(--surface2); }
+
+  tbody td {
+    padding: 12px 14px;
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    text-align: right;
+    color: var(--text);
+    white-space: nowrap;
+  }
+  tbody td:first-child, tbody td:nth-child(2) { text-align: left; }
+
+  .ticker-cell {
+    font-weight: 700;
+    color: var(--accent);
+    font-size: 0.88rem;
+  }
+  .name-cell {
+    font-family: var(--sans);
+    font-size: 0.78rem;
+    color: var(--muted);
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .positive { color: var(--green); }
+  .negative { color: var(--red); }
+  .neutral { color: var(--muted); }
+
+  .badge-gain {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 7px;
+    border-radius: 5px;
+    font-size: 0.72rem;
+    font-weight: 700;
+  }
+  .badge-gain.pos { background: var(--green-dim); color: var(--green); }
+  .badge-gain.neg { background: var(--red-dim); color: var(--red); }
+
+  .btn-del {
+    background: none;
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 4px 9px;
+    font-size: 0.72rem;
+    font-family: var(--mono);
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .btn-del:hover { border-color: var(--red); color: var(--red); }
+
+  .btn-refresh {
+    background: none;
+    border: 1px solid var(--border2);
+    border-radius: 7px;
+    color: var(--accent);
+    cursor: pointer;
+    padding: 5px 12px;
+    font-size: 0.75rem;
+    font-family: var(--mono);
+    transition: background 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .btn-refresh:hover { background: var(--accent-dim); }
+  .btn-refresh.spinning svg { animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .table-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .table-header h2 {
+    font-size: 0.8rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-family: var(--mono);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: var(--muted);
+    font-size: 0.85rem;
+    border: 1px dashed var(--border2);
+    border-radius: var(--radius-lg);
+  }
+  .empty-state p:first-child { font-size: 1.5rem; margin-bottom: 0.5rem; }
+
+  .loading-cell {
+    color: var(--amber);
+    font-size: 0.72rem;
+  }
+
+  /* Last update */
+  .last-update {
+    font-size: 0.7rem;
+    color: var(--muted);
+    font-family: var(--mono);
+  }
+
+  .compras-section {
+    margin-top: 0.4rem;
+  }
+  .compra-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin-bottom: 4px;
+    font-size: 0.72rem;
+    flex-wrap: wrap;
+  }
+  .compra-row input {
+    width: 90px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    padding: 4px 7px;
+    outline: none;
+  }
+  .compra-row input:focus { border-color: var(--accent); }
+  .btn-sm {
+    background: none;
+    border: 1px solid var(--border2);
+    border-radius: 5px;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 3px 8px;
+    font-size: 0.65rem;
+    font-family: var(--mono);
+  }
+  .btn-sm.add { color: var(--green); border-color: var(--green-dim); }
+  .btn-sm.add:hover { background: var(--green-dim); }
+  .btn-sm.rem { color: var(--red); }
+  .btn-sm.rem:hover { background: var(--red-dim); border-color: var(--red-dim); }
+
+  .ppc-display {
+    font-weight: 700;
+    color: var(--amber);
+  }
+
+  footer {
+    padding: 1.5rem 2.5rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.7rem;
+    color: var(--muted);
+    text-align: center;
+    font-family: var(--mono);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-title">
+    <h1><span class="status-dot"></span>PORTFOLIO TRACKER</h1>
+    <p>Precio real · PPC en ARS · Ganancia/Pérdida por posición</p>
+  </div>
+  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+    <div class="tcambio-badge">USD/ARS: <span id="tcambio-val">cargando...</span></div>
+    <span class="last-update" id="last-update">—</span>
+  </div>
+</header>
+
+<main>
+  <!-- Summary cards -->
+  <div class="summary-grid">
+    <div class="summary-card">
+      <label>Posiciones</label>
+      <div class="val accent" id="sum-pos">0</div>
+    </div>
+    <div class="summary-card">
+      <label>Inversión total (ARS)</label>
+      <div class="val amber" id="sum-inv">$0</div>
+    </div>
+    <div class="summary-card">
+      <label>Valor actual (ARS)</label>
+      <div class="val accent" id="sum-val">$0</div>
+    </div>
+    <div class="summary-card">
+      <label>Resultado total</label>
+      <div class="val" id="sum-res">$0</div>
+    </div>
+    <div class="summary-card">
+      <label>Rendimiento</label>
+      <div class="val" id="sum-pct">0.00%</div>
+    </div>
+  </div>
+
+  <!-- Add form -->
+  <div class="add-form">
+    <h2>Agregar acción</h2>
+    <div class="form-row">
+      <div class="form-field" style="max-width:130px;">
+        <label>Ticker (NYSE/NASDAQ)</label>
+        <input type="text" id="f-ticker" placeholder="ej: AAPL" maxlength="10" autocomplete="off" style="text-transform:uppercase;">
+      </div>
+      <div class="form-field" style="max-width:140px;">
+        <label>Cant. acciones</label>
+        <input type="number" id="f-cant" placeholder="ej: 10" min="0.0001" step="any">
+      </div>
+      <div class="form-field" style="max-width:160px;">
+        <label>Precio compra (ARS/acc)</label>
+        <input type="number" id="f-precio" placeholder="ej: 185000" min="0" step="any">
+      </div>
+      <button class="btn-add" id="btn-agregar" onclick="agregarPosicion()">+ Agregar</button>
+    </div>
+    <p class="form-hint">Podés agregar múltiples compras por ticker para calcular el PPC ponderado.</p>
+    <div class="form-msg" id="form-msg"></div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-header">
+    <h2>Posiciones</h2>
+    <button class="btn-refresh" id="btn-refresh" onclick="refreshTodos()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M1 4v6h6M23 20v-6h-6"/>
+        <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/>
+      </svg>
+      Actualizar precios
+    </button>
+  </div>
+
+  <div id="tabla-container">
+    <div class="empty-state">
+      <p>📊</p>
+      <p>Agregá tu primera posición arriba para comenzar</p>
+    </div>
+  </div>
+</main>
+
+<footer>
+  Precios en USD via Yahoo Finance · Tipo de cambio via exchangerate-api · Datos con posible delay de 15-20 min
+</footer>
+
+<script>
+const PROXY_BASE = 'https://query1.finance.yahoo.com/v8/finance/chart/';
+const CORS_PROXY = 'https://api.allorigins.win/get?url=';
+const TCambio_FALLBACK = 1200;
+
+let portfolio = JSON.parse(localStorage.getItem('ptPortfolio') || '[]');
+let precios = {};
+let tcambio = TCambio_FALLBACK;
+let ultimaActualizacion = null;
+
+async function obtenerTipoCambio() {
+  try {
+    const url = encodeURIComponent('https://api.exchangerate-api.com/v4/latest/USD');
+    const r = await fetch(CORS_PROXY + url);
+    const d = await r.json();
+    const body = JSON.parse(d.contents);
+    if (body.rates && body.rates.ARS) {
+      tcambio = body.rates.ARS;
+      document.getElementById('tcambio-val').textContent = '$ ' + tcambio.toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2});
+    }
+  } catch(e) {
+    document.getElementById('tcambio-val').textContent = '$ ' + TCambio_FALLBACK.toFixed(2) + ' (est.)';
+  }
+}
+
+async function obtenerPrecio(ticker) {
+  try {
+    const url = encodeURIComponent(`${PROXY_BASE}${ticker}?interval=1d&range=1d`);
+    const r = await fetch(CORS_PROXY + url);
+    const d = await r.json();
+    const body = JSON.parse(d.contents);
+    const result = body.chart.result[0];
+    const meta = result.meta;
+    const precio = meta.regularMarketPrice;
+    const prevClose = meta.previousClose || meta.chartPreviousClose;
+    const cambio = precio - prevClose;
+    const cambioPct = (cambio / prevClose) * 100;
+    const nombre = meta.shortName || ticker;
+    return { precio, cambio, cambioPct, nombre, ok: true };
+  } catch(e) {
+    return { precio: null, ok: false };
+  }
+}
+
+function calcularPPC(compras) {
+  if (!compras || compras.length === 0) return { ppc: 0, totalCantidad: 0, totalInversion: 0 };
+  let totalPeso = 0;
+  let totalCantidad = 0;
+  let totalInversion = 0;
+  for (const c of compras) {
+    const cant = parseFloat(c.cant) || 0;
+    const precio = parseFloat(c.precio) || 0;
+    totalPeso += cant * precio;
+    totalCantidad += cant;
+    totalInversion += cant * precio;
+  }
+  const ppc = totalCantidad > 0 ? totalPeso / totalCantidad : 0;
+  return { ppc, totalCantidad, totalInversion };
+}
+
+function guardar() {
+  localStorage.setItem('ptPortfolio', JSON.stringify(portfolio));
+}
+
+function mostrarMensaje(msg, tipo) {
+  const el = document.getElementById('form-msg');
+  el.textContent = msg;
+  el.className = 'form-msg ' + tipo;
+  setTimeout(() => { el.className = 'form-msg'; }, 3000);
+}
+
+async function agregarPosicion() {
+  const ticker = document.getElementById('f-ticker').value.trim().toUpperCase();
+  const cant = parseFloat(document.getElementById('f-cant').value);
+  const precio = parseFloat(document.getElementById('f-precio').value);
+
+  if (!ticker) return mostrarMensaje('Ingresá un ticker válido.', 'error');
+  if (!cant || cant <= 0) return mostrarMensaje('Ingresá una cantidad válida.', 'error');
+  if (!precio || precio <= 0) return mostrarMensaje('Ingresá un precio de compra válido en ARS.', 'error');
+
+  const btn = document.getElementById('btn-agregar');
+  btn.disabled = true;
+  btn.textContent = 'Consultando...';
+
+  const data = await obtenerPrecio(ticker);
+
+  if (!data.ok) {
+    mostrarMensaje(`No se encontró el ticker "${ticker}". Verificá si es correcto (ej: AAPL, MSFT, MELI).`, 'error');
+    btn.disabled = false;
+    btn.textContent = '+ Agregar';
+    return;
+  }
+
+  precios[ticker] = data;
+
+  const idx = portfolio.findIndex(p => p.ticker === ticker);
+  if (idx >= 0) {
+    portfolio[idx].compras.push({ cant, precio });
+  } else {
+    portfolio.push({ ticker, nombre: data.nombre, compras: [{ cant, precio }] });
+  }
+
+  guardar();
+  renderTabla();
+  actualizarSummary();
+
+  document.getElementById('f-ticker').value = '';
+  document.getElementById('f-cant').value = '';
+  document.getElementById('f-precio').value = '';
+  mostrarMensaje(`${ticker} agregado correctamente.`, 'ok');
+
+  btn.disabled = false;
+  btn.textContent = '+ Agregar';
+}
+
+function eliminarPosicion(ticker) {
+  if (!confirm(`¿Eliminar toda la posición de ${ticker}?`)) return;
+  portfolio = portfolio.filter(p => p.ticker !== ticker);
+  delete precios[ticker];
+  guardar();
+  renderTabla();
+  actualizarSummary();
+}
+
+function agregarCompra(ticker) {
+  const idx = portfolio.findIndex(p => p.ticker === ticker);
+  if (idx < 0) return;
+  portfolio[idx].compras.push({ cant: '', precio: '' });
+  guardar();
+  renderTabla();
+}
+
+function eliminarCompra(ticker, ci) {
+  const idx = portfolio.findIndex(p => p.ticker === ticker);
+  if (idx < 0 || portfolio[idx].compras.length <= 1) return;
+  portfolio[idx].compras.splice(ci, 1);
+  guardar();
+  renderTabla();
+  actualizarSummary();
+}
+
+function actualizarCompra(ticker, ci, campo, valor) {
+  const idx = portfolio.findIndex(p => p.ticker === ticker);
+  if (idx < 0) return;
+  portfolio[idx].compras[ci][campo] = valor;
+  guardar();
+  actualizarFilaSummary(ticker);
+  actualizarSummary();
+}
+
+function actualizarFilaSummary(ticker) {
+  const pos = portfolio.find(p => p.ticker === ticker);
+  if (!pos) return;
+  const { ppc, totalCantidad, totalInversion } = calcularPPC(pos.compras);
+  const precio = precios[ticker];
+  if (!precio || !precio.ok) return;
+
+  const precioUSD = precio.precio;
+  const precioARS = precioUSD * tcambio;
+  const valorActualARS = precioARS * totalCantidad;
+  const resARS = valorActualARS - totalInversion;
+  const resPct = totalInversion > 0 ? (resARS / totalInversion) * 100 : 0;
+
+  const row = document.getElementById('row-' + ticker);
+  if (!row) return;
+
+  row.querySelector('.td-ppc').textContent = fmtARS(ppc);
+  row.querySelector('.td-cant').textContent = fmtNum(totalCantidad);
+  row.querySelector('.td-inv').textContent = fmtARS(totalInversion);
+  row.querySelector('.td-val').textContent = fmtARS(valorActualARS);
+  const resEl = row.querySelector('.td-res');
+  resEl.textContent = (resARS >= 0 ? '+' : '') + fmtARS(resARS);
+  resEl.className = 'td-res ' + (resARS >= 0 ? 'positive' : 'negative');
+  const pctEl = row.querySelector('.td-pct');
+  pctEl.innerHTML = `<span class="badge-gain ${resPct >= 0 ? 'pos' : 'neg'}">${resPct >= 0 ? '▲' : '▼'} ${Math.abs(resPct).toFixed(2)}%</span>`;
+}
+
+async function refreshTodos() {
+  if (portfolio.length === 0) return;
+  const btn = document.getElementById('btn-refresh');
+  btn.classList.add('spinning');
+  btn.style.pointerEvents = 'none';
+
+  await obtenerTipoCambio();
+
+  for (const pos of portfolio) {
+    const data = await obtenerPrecio(pos.ticker);
+    if (data.ok) {
+      precios[pos.ticker] = data;
+      pos.nombre = data.nombre;
+    }
+  }
+  guardar();
+  ultimaActualizacion = new Date();
+  document.getElementById('last-update').textContent = 'Actualizado: ' + ultimaActualizacion.toLocaleTimeString('es-AR');
+
+  renderTabla();
+  actualizarSummary();
+  btn.classList.remove('spinning');
+  btn.style.pointerEvents = '';
+}
+
+function fmtARS(n) {
+  return '$ ' + (n || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function fmtUSD(n) {
+  return 'USD ' + (n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function fmtNum(n) {
+  return (n || 0).toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 4 });
+}
+
+function actualizarSummary() {
+  let totalInversion = 0;
+  let totalValor = 0;
+  let posConPrecio = 0;
+
+  for (const pos of portfolio) {
+    const { totalCantidad, totalInversion: inv } = calcularPPC(pos.compras);
+    totalInversion += inv;
+    const precio = precios[pos.ticker];
+    if (precio && precio.ok) {
+      totalValor += precio.precio * tcambio * totalCantidad;
+      posConPrecio++;
+    }
+  }
+
+  const res = totalValor - totalInversion;
+  const pct = totalInversion > 0 ? (res / totalInversion) * 100 : 0;
+
+  document.getElementById('sum-pos').textContent = portfolio.length;
+  document.getElementById('sum-inv').textContent = fmtARS(totalInversion);
+  document.getElementById('sum-val').textContent = fmtARS(totalValor);
+
+  const resEl = document.getElementById('sum-res');
+  resEl.textContent = (res >= 0 ? '+' : '') + fmtARS(res);
+  resEl.className = 'val ' + (res >= 0 ? 'green' : 'red');
+
+  const pctEl = document.getElementById('sum-pct');
+  pctEl.textContent = (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%';
+  pctEl.className = 'val ' + (pct >= 0 ? 'green' : 'red');
+}
+
+function renderTabla() {
+  const container = document.getElementById('tabla-container');
+  if (portfolio.length === 0) {
+    container.innerHTML = `<div class="empty-state"><p>📊</p><p>Agregá tu primera posición arriba para comenzar</p></div>`;
+    return;
+  }
+
+  let html = `<div class="table-wrap"><table>
+    <thead><tr>
+      <th>Ticker</th>
+      <th>Nombre</th>
+      <th>Precio actual</th>
+      <th>Var. día</th>
+      <th>Precio ARS</th>
+      <th>Cant. total</th>
+      <th>PPC (ARS)</th>
+      <th>Inversión</th>
+      <th>Valor actual</th>
+      <th>Resultado</th>
+      <th>%</th>
+      <th></th>
+    </tr></thead>
+    <tbody>`;
+
+  for (const pos of portfolio) {
+    const precio = precios[pos.ticker];
+    const { ppc, totalCantidad, totalInversion } = calcularPPC(pos.compras);
+    const precioUSD = precio && precio.ok ? precio.precio : null;
+    const precioARS = precioUSD ? precioUSD * tcambio : null;
+    const valorActualARS = precioARS ? precioARS * totalCantidad : null;
+    const resARS = valorActualARS !== null ? valorActualARS - totalInversion : null;
+    const resPct = resARS !== null && totalInversion > 0 ? (resARS / totalInversion) * 100 : null;
+    const cambioUSD = precio && precio.ok ? precio.cambio : null;
+    const cambioPct = precio && precio.ok ? precio.cambioPct : null;
+
+    html += `<tr id="row-${pos.ticker}">
+      <td><span class="ticker-cell">${pos.ticker}</span></td>
+      <td><span class="name-cell">${pos.nombre || pos.ticker}</span></td>
+      <td>${precioUSD !== null ? fmtUSD(precioUSD) : '<span class="loading-cell">cargando...</span>'}</td>
+      <td>${cambioPct !== null ? `<span class="${cambioPct >= 0 ? 'positive' : 'negative'}">${cambioPct >= 0 ? '+' : ''}${cambioPct.toFixed(2)}%</span>` : '—'}</td>
+      <td>${precioARS !== null ? fmtARS(precioARS) : '—'}</td>
+      <td class="td-cant">${fmtNum(totalCantidad)}</td>
+      <td class="td-ppc ppc-display">${fmtARS(ppc)}</td>
+      <td class="td-inv">${fmtARS(totalInversion)}</td>
+      <td class="td-val">${valorActualARS !== null ? fmtARS(valorActualARS) : '—'}</td>
+      <td class="td-res ${resARS !== null ? (resARS >= 0 ? 'positive' : 'negative') : 'neutral'}">${resARS !== null ? (resARS >= 0 ? '+' : '') + fmtARS(resARS) : '—'}</td>
+      <td class="td-pct">${resPct !== null ? `<span class="badge-gain ${resPct >= 0 ? 'pos' : 'neg'}">${resPct >= 0 ? '▲' : '▼'} ${Math.abs(resPct).toFixed(2)}%</span>` : '—'}</td>
+      <td><button class="btn-del" onclick="eliminarPosicion('${pos.ticker}')">✕</button></td>
+    </tr>
+    <tr>
+      <td colspan="12" style="padding:0 14px 14px 14px; border-bottom: 1px solid var(--border);">
+        <div class="compras-section">
+          <div style="font-size:0.65rem; color: var(--muted); font-family: var(--mono); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px;">Detalle de compras</div>
+          ${pos.compras.map((c, ci) => `
+          <div class="compra-row">
+            <span style="color:var(--muted);font-size:0.65rem;font-family:var(--mono);min-width:18px;">#${ci+1}</span>
+            <span style="color:var(--muted);font-size:0.68rem;">Cant:</span>
+            <input type="number" value="${c.cant}" placeholder="0" min="0" step="any"
+              onchange="actualizarCompra('${pos.ticker}',${ci},'cant',parseFloat(this.value)||0)"
+              oninput="actualizarCompra('${pos.ticker}',${ci},'cant',parseFloat(this.value)||0)">
+            <span style="color:var(--muted);font-size:0.68rem;">Precio ARS:</span>
+            <input type="number" value="${c.precio}" placeholder="0" min="0" step="any"
+              onchange="actualizarCompra('${pos.ticker}',${ci},'precio',parseFloat(this.value)||0)"
+              oninput="actualizarCompra('${pos.ticker}',${ci},'precio',parseFloat(this.value)||0)">
+            ${pos.compras.length > 1 ? `<button class="btn-sm rem" onclick="eliminarCompra('${pos.ticker}',${ci})">− quitar</button>` : ''}
+          </div>`).join('')}
+          <button class="btn-sm add" onclick="agregarCompra('${pos.ticker}')">+ agregar otra compra</button>
+        </div>
+      </td>
+    </tr>`;
+  }
+
+  html += `</tbody></table></div>`;
+  container.innerHTML = html;
+}
+
+// Inicialización
+(async function init() {
+  await obtenerTipoCambio();
+  if (portfolio.length > 0) {
+    renderTabla();
+    await refreshTodos();
+  } else {
+    renderTabla();
+  }
+  document.getElementById('f-ticker').addEventListener('keydown', e => {
+    if (e.key === 'Enter') agregarPosicion();
+    e.target.value = e.target.value.toUpperCase();
+  });
+})();
+
+// Auto-refresh cada 5 minutos
+setInterval(refreshTodos, 5 * 60 * 1000);
+</script>
+</body>
+</html>
